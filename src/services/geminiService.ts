@@ -105,7 +105,7 @@ export async function chatAboutMedicine(medicine: MedicineInfo, history: {role: 
     model,
     history: chatHistory,
     config: {
-      systemInstruction: `你是藥物諮詢師。目前用戶正在詢問關於「${medicine.chineseName} (${medicine.genericName})」的資訊。請針對用戶的問題提供專業建議，強調安全性、副作用與交互作用。若問題超出藥事範圍，請建議點擊「諮詢實體藥師」。`,
+      systemInstruction: `你是藥物諮詢師。目前用戶正在詢問關於「${medicine.chineseName} (${medicine.genericName})」的資訊。請針對用戶的問題提供專業建議，強調安全性、副作用與交互作用。若問題超出藥事範圍，請建議點擊「諮詢實體藥師」。重要：請務必保持回答簡短扼要（盡量控制在 100 字以內），並使用口語化的純文字，絕對不要使用 Markdown 符號（例如 ** 或 ###）。`,
     }
   });
 
