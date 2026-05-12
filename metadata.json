@@ -1,0 +1,6 @@
+{
+  "name": "MediScan 藥智查",
+  "description": "輸入藥名或上傳圖片即可查詢藥物學名、用法、建議售價及相關諮詢建議。專為個人用藥安全與諮詢設計的智慧助理。",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["AI Image Recognition", "Medical Information Lookup"]
+}

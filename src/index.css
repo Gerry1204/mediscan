@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Noto Sans TC", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-primary: var(--color-indigo-600);
+  --color-brand-dark: var(--color-indigo-900);
+  --color-surface: var(--color-slate-50);
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 font-sans antialiased;
+}
+
+.sleek-card {
+  @apply bg-white rounded-3xl shadow-sm border border-slate-100 transition-all duration-300;
+}
+
+.sleek-shadow {
+  @apply shadow-xl shadow-slate-200/50;
+}
+
+.gradient-overlay {
+  background: radial-gradient(circle at 100% 0%, rgba(79, 70, 229, 0.05) 0%, transparent 50%);
+}
