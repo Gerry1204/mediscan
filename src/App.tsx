@@ -5,16 +5,16 @@
 
 import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  Image as ImageIcon, 
-  Pill, 
-  Info, 
-  AlertCircle, 
-  DollarSign, 
-  Stethoscope, 
-  Loader2, 
-  Camera, 
+import {
+  Search,
+  Image as ImageIcon,
+  Pill,
+  Info,
+  AlertCircle,
+  DollarSign,
+  Stethoscope,
+  Loader2,
+  Camera,
   Upload,
   X,
   ChevronRight,
@@ -50,7 +50,7 @@ export default function App() {
 
   // Consultation Chat State
   const [chatMessage, setChatMessage] = useState('');
-  const [chatHistory, setChatHistory] = useState<{role: 'user' | 'model', text: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ role: 'user' | 'model', text: string }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
 
   // Reminders State
@@ -60,6 +60,42 @@ export default function App() {
     const saved = localStorage.getItem('med_reminders');
     if (saved) setReminders(JSON.parse(saved));
   }, []);
+
+  useEffect(() => {
+    // Request notification permission on mount
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const currentHour = String(now.getHours()).padStart(2, '0');
+      const currentMinute = String(now.getMinutes()).padStart(2, '0');
+      const currentTime = `${currentHour}:${currentMinute}`;
+      
+      const lastTriggered = sessionStorage.getItem('last_reminder_time');
+
+      if (currentTime !== lastTriggered) {
+        const dueReminders = reminders.filter(r => r.time === currentTime);
+        
+        if (dueReminders.length > 0) {
+          sessionStorage.setItem('last_reminder_time', currentTime);
+          
+          dueReminders.forEach(reminder => {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(`用藥提醒: ${reminder.name}`, {
+                body: `請記得服用：\n${reminder.dosage}`,
+              });
+            } else {
+              alert(`🔔 用藥時間到！\n\n藥品：${reminder.name}\n用法：${reminder.dosage}\n時間：${reminder.time}`);
+            }
+          });
+        }
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(intervalId);
+  }, [reminders]);
 
   const saveReminders = (newReminders: Reminder[]) => {
     setReminders(newReminders);
@@ -109,7 +145,7 @@ export default function App() {
 
   const handleSendMessage = async () => {
     if (!chatMessage || !result) return;
-    
+
     const userMsg = { role: 'user' as const, text: chatMessage };
     setChatHistory(prev => [...prev, userMsg]);
     setChatMessage('');
@@ -143,17 +179,16 @@ export default function App() {
   };
 
   const TabButton = ({ id, label, icon: Icon, needsResult = false }: { id: TabType, label: string, icon: any, needsResult?: boolean }) => (
-    <button 
+    <button
       onClick={() => {
         setActiveTab(id);
         setShowMobileMenu(false);
       }}
       disabled={needsResult && !result}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold ${
-        activeTab === id 
-        ? 'bg-indigo-600 text-white shadow-md' 
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold ${activeTab === id
+        ? 'bg-indigo-600 text-white shadow-md'
         : 'text-slate-600 hover:bg-slate-100 disabled:opacity-30'
-      }`}
+        }`}
     >
       <Icon size={18} />
       <span className="text-sm">{label}</span>
@@ -189,12 +224,11 @@ export default function App() {
 
         {/* Mobile Header Actions */}
         <div className="flex md:hidden items-center gap-2">
-          <button 
+          <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             className="p-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 flex items-center gap-1 active:scale-95 transition-transform"
           >
             <MoreHorizontal size={20} />
-            <span className="text-xs font-bold mr-1">更多</span>
           </button>
         </div>
       </header>
@@ -202,7 +236,7 @@ export default function App() {
       {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {showMobileMenu && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -218,42 +252,44 @@ export default function App() {
 
       <main className="flex-1 p-4 md:p-12 max-w-7xl mx-auto w-full space-y-6 md:space-y-10">
         {/* Main Search Area */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl md:rounded-[2rem] p-1.5 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row items-center gap-1 md:gap-2"
-        >
-          <div className="flex-1 flex items-center px-4 w-full">
-            <input 
-              type="text" 
-              placeholder="輸入藥名、學名或症狀..." 
-              className="w-full py-3 md:py-4 text-slate-700 outline-none text-base md:text-lg font-medium"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 w-full md:w-auto p-1.5 md:p-1 md:pr-1 pt-0 md:pt-1">
-            <button 
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 md:py-3 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl text-slate-600 font-black text-sm transition-all active:scale-95"
-            >
-              <Camera size={16} />
-              <span className="whitespace-nowrap">拍照</span>
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-            <button 
-              onClick={() => handleSearch()}
-              disabled={loading}
-              className="flex-1 md:flex-none bg-indigo-600 text-white py-2.5 md:py-3 px-6 rounded-xl md:rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 transition-all hover:bg-indigo-700 disabled:opacity-80"
-            >
-              {loading ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
-              <span>搜尋</span>
-            </button>
-          </div>
-        </motion.div>
+        {activeTab === 'query' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl md:rounded-[2rem] p-1.5 shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col md:flex-row items-center gap-1 md:gap-2"
+          >
+            <div className="flex-1 flex items-center px-4 w-full">
+              <input
+                type="text"
+                placeholder="輸入藥名、學名或症狀..."
+                className="w-full py-3 md:py-4 text-slate-700 outline-none text-base md:text-lg font-medium"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto p-1.5 md:p-1 md:pr-1 pt-0 md:pt-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 md:py-3 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl text-slate-600 font-black text-sm transition-all active:scale-95"
+              >
+                <Camera size={16} />
+                <span className="whitespace-nowrap">拍照</span>
+              </button>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+              <button
+                onClick={() => handleSearch()}
+                disabled={loading}
+                className="flex-1 md:flex-none bg-indigo-600 text-white py-2.5 md:py-3 px-6 rounded-xl md:rounded-2xl font-black text-sm shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 transition-all hover:bg-indigo-700 disabled:opacity-80"
+              >
+                <Search size={16} />
+                <span>搜尋</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {previewImage && activeTab === 'query' && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center">
@@ -275,7 +311,7 @@ export default function App() {
           {loading ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 space-y-4">
               <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
-              <p className="text-slate-400 text-xs font-bold tracking-widest uppercase">調閱中...</p>
+              <p className="text-slate-400 text-xs font-bold tracking-widest uppercase">資料調閱中...</p>
             </motion.div>
           ) : activeTab === 'query' && result ? (
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-8 items-start">
@@ -297,7 +333,7 @@ export default function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-3">
                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Stethoscope size={12} className="text-rose-500"/> 適應症
+                        <Stethoscope size={12} className="text-rose-500" /> 適應症
                       </h3>
                       <div className="flex flex-wrap gap-1.5">
                         {result.indications.split(/[、,，]/).map((item, idx) => (
@@ -309,7 +345,7 @@ export default function App() {
                     </div>
                     <div className="space-y-3">
                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Bell size={12} className="text-indigo-500"/> 用法用量
+                        <Bell size={12} className="text-indigo-500" /> 用法用量
                       </h3>
                       <div className="bg-slate-50 p-4 rounded-2xl text-xs md:text-sm text-slate-600 leading-relaxed font-bold italic border border-slate-100">
                         {result.dosage}
@@ -325,7 +361,7 @@ export default function App() {
                       查看學名藥對比 <ChevronRight size={10} />
                     </button>
                   </div>
-                  
+
                   <div className="bg-slate-50 p-6 md:p-8 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-center md:text-left">
                       <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mb-1">估計通路價格</p>
@@ -363,7 +399,7 @@ export default function App() {
           ) : activeTab === 'comparison' && result ? (
             <motion.div key="comparison" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
               <div className="flex items-center gap-3">
-                <button onClick={() => setActiveTab('query')} className="p-2 hover:bg-white rounded-full text-slate-400"><X size={18}/></button>
+                <button onClick={() => setActiveTab('query')} className="p-2 hover:bg-white rounded-full text-slate-400"><X size={18} /></button>
                 <h2 className="text-2xl font-black text-slate-800">詢價對比</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -386,56 +422,55 @@ export default function App() {
             </motion.div>
           ) : activeTab === 'consultation' && result ? (
             <motion.div key="consultation" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-3xl mx-auto h-[500px] md:h-[600px] flex flex-col bg-white rounded-3xl md:rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
-               <div className="bg-indigo-900 p-5 text-white flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                   <div className="w-9 h-9 rounded-xl bg-indigo-800 flex items-center justify-center"><MessageSquare size={18}/></div>
-                   <div>
-                     <h3 className="font-bold text-sm md:text-base">AI 藥師諮詢</h3>
-                     <p className="text-[10px] text-indigo-400 uppercase tracking-widest">針對 {result.chineseName}</p>
-                   </div>
-                 </div>
-                 <button onClick={() => setActiveTab('query')} className="p-1 hover:bg-white/10 rounded-lg transition-colors"><X size={18}/></button>
-               </div>
-               
-               <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-slate-50/50">
-                 <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-xs md:text-sm text-slate-600 border border-slate-100 max-w-[90%] leading-relaxed">
-                   您好！我是您的智慧藥師。關於 <b>{result.chineseName} ({result.genericName})</b>，有任何想了解的副作用或用藥時程嗎？
-                 </div>
-                 {chatHistory.map((chat, i) => (
-                   <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                     <div className={`p-4 rounded-2xl text-xs md:text-sm max-w-[90%] shadow-sm leading-relaxed ${
-                       chat.role === 'user' 
-                       ? 'bg-indigo-600 text-white rounded-tr-none font-bold' 
-                       : 'bg-white text-slate-600 rounded-tl-none border border-slate-100'
-                     }`}>
-                       {chat.text}
-                     </div>
-                   </div>
-                 ))}
-                 {chatLoading && (
-                   <div className="flex justify-start">
-                     <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100">
-                       <Loader2 size={14} className="animate-spin text-indigo-600" />
-                     </div>
-                   </div>
-                 )}
-               </div>
+              <div className="bg-indigo-900 p-5 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-800 flex items-center justify-center"><MessageSquare size={18} /></div>
+                  <div>
+                    <h3 className="font-bold text-sm md:text-base">AI 藥師諮詢</h3>
+                    <p className="text-[10px] text-indigo-400 uppercase tracking-widest">針對 {result.chineseName}</p>
+                  </div>
+                </div>
+                <button onClick={() => setActiveTab('query')} className="p-1 hover:bg-white/10 rounded-lg transition-colors"><X size={18} /></button>
+              </div>
 
-               <div className="p-3 md:p-4 border-t border-slate-100 bg-white shadow-inner">
-                 <div className="flex gap-2">
-                   <input 
-                     type="text" 
-                     placeholder="輸入您的問題..." 
-                     className="flex-1 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                     value={chatMessage}
-                     onChange={(e) => setChatMessage(e.target.value)}
-                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                   />
-                   <button onClick={handleSendMessage} disabled={chatLoading} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 active:scale-95 transition-all">
-                     <ChevronRight size={20} />
-                   </button>
-                 </div>
-               </div>
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-slate-50/50">
+                <div className="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm text-xs md:text-sm text-slate-600 border border-slate-100 max-w-[90%] leading-relaxed">
+                  您好！我是您的智慧藥師。關於 <b>{result.chineseName} ({result.genericName})</b>，有任何想了解的副作用或用藥時程嗎？
+                </div>
+                {chatHistory.map((chat, i) => (
+                  <div key={i} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`p-4 rounded-2xl text-xs md:text-sm max-w-[90%] shadow-sm leading-relaxed ${chat.role === 'user'
+                      ? 'bg-indigo-600 text-white rounded-tr-none font-bold'
+                      : 'bg-white text-slate-600 rounded-tl-none border border-slate-100'
+                      }`}>
+                      {chat.text}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100">
+                      <Loader2 size={14} className="animate-spin text-indigo-600" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-3 md:p-4 border-t border-slate-100 bg-white shadow-inner">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="輸入您的問題..."
+                    className="flex-1 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                  />
+                  <button onClick={handleSendMessage} disabled={chatLoading} className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 active:scale-95 transition-all">
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </div>
             </motion.div>
           ) : activeTab === 'reminders' ? (
             <motion.div key="reminders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto space-y-6">
@@ -453,23 +488,23 @@ export default function App() {
                   {reminders.map(reminder => (
                     <div key={reminder.id} className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between group active:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Clock size={18}/></div>
+                        <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><Clock size={18} /></div>
                         <div>
                           <h4 className="font-black text-slate-800 text-sm md:text-base">{reminder.name}</h4>
                           <p className="text-[10px] text-slate-400 font-bold uppercase">{reminder.dosage}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <input 
-                          type="time" 
-                          value={reminder.time} 
+                        <input
+                          type="time"
+                          value={reminder.time}
                           onChange={(e) => {
-                            const updated = reminders.map(r => r.id === reminder.id ? {...r, time: e.target.value} : r);
+                            const updated = reminders.map(r => r.id === reminder.id ? { ...r, time: e.target.value } : r);
                             saveReminders(updated);
                           }}
                           className="bg-slate-50 px-2 py-1.5 rounded-lg font-mono font-bold text-slate-700 text-xs md:text-sm outline-none border border-slate-100"
                         />
-                        <button onClick={() => deleteReminder(reminder.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                        <button onClick={() => deleteReminder(reminder.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={16} /></button>
                       </div>
                     </div>
                   ))}
@@ -501,7 +536,7 @@ export default function App() {
       {/* Bottom Micro-Bar */}
       <footer className="bg-slate-900 py-6 px-6 md:px-10 text-[10px] md:text-[11px] flex flex-col md:flex-row justify-between items-center gap-4 mt-auto">
         <p className="text-slate-500 font-bold tracking-tight text-center md:text-left leading-relaxed">
-          © 2026 MediScan AI. 本資訊僅供參考，不具診斷效力。<br className="md:hidden"/>用藥前請諮詢醫療專業人員。
+          © 2026 MediScan AI. 本資訊僅供參考，不具診斷效力。<br className="md:hidden" />用藥前請諮詢醫療專業人員。
         </p>
         <div className="flex gap-4 uppercase tracking-[0.2em] font-black items-center">
           <div className="flex items-center gap-2 text-emerald-500">
