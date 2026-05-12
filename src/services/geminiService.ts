@@ -96,13 +96,19 @@ export async function analyzeMedicine(query: string, imageBase64?: string): Prom
 
 export async function chatAboutMedicine(medicine: MedicineInfo, history: {role: 'user' | 'model', text: string}[], message: string) {
   const model = "gemini-3-flash-preview";
-  const chat = ai.models.startChat({
+  const chatHistory = history.map(h => ({
+    role: h.role,
+    parts: [{ text: h.text }]
+  }));
+
+  const chat = ai.chats.create({
     model,
+    history: chatHistory,
     config: {
       systemInstruction: `你是藥物諮詢師。目前用戶正在詢問關於「${medicine.chineseName} (${medicine.genericName})」的資訊。請針對用戶的問題提供專業建議，強調安全性、副作用與交互作用。若問題超出藥事範圍，請建議點擊「諮詢實體藥師」。`,
     }
   });
 
-  const result = await chat.sendMessage(message);
-  return result.response.text();
+  const result = await chat.sendMessage({ message });
+  return result.text;
 }
