@@ -100,6 +100,7 @@ export default function App() {
       setResult(data);
       setChatHistory([]); // Reset chat when new medicine found
     } catch (err: any) {
+      console.error("Search API Error:", err);
       setError(err.message || '發生錯誤，請稍後再試');
     } finally {
       setLoading(false);
@@ -118,6 +119,7 @@ export default function App() {
       const response = await chatAboutMedicine(result, chatHistory, chatMessage);
       setChatHistory(prev => [...prev, { role: 'model', text: response }]);
     } catch (err) {
+      console.error("Chat API Error:", err);
       setChatHistory(prev => [...prev, { role: 'model', text: '抱歉，暫時無法連線到 AI 藥師。' }]);
     } finally {
       setChatLoading(false);
