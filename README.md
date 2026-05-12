@@ -9,6 +9,12 @@
   </p>
 </div>
 
+<div align="center">
+  <img src="docs/screenshot-1.png" alt="MediScan AI Pharmacist" width="45%" />
+  <img src="docs/screenshot-2.png" alt="MediScan AI Interface" width="45%" />
+</div>
+
+
 ## ✨ 主要功能 (Features)
 
 - **🔍 智慧識別 (Smart Recognition)**
